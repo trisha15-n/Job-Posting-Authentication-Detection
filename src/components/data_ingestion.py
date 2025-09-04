@@ -5,6 +5,8 @@ from src.exception import CustomException
 from src.logger import logging
 from sklearn.model_selection import train_test_split
 from dataclasses import dataclass
+from src.components.data_transformation import DataTransformation
+from src.components.data_transformation import DataTransformationConfig
 
 @dataclass
 class DataIngestionConfig:
@@ -44,4 +46,31 @@ class DataIngestion:
     
 if __name__ == "__main__":
   obj = DataIngestion()
-  obj.initiate_data_ingestion()    
+  train_data_path, test_data_path = obj.initiate_data_ingestion()  
+
+  train_data = pd.read_csv(train_data_path)
+  test_data = pd.read_csv(test_data_path)
+
+  print(f"Columns in train data: {train_data.columns}")
+  print(f"Columns in test data: {test_data.columns}")
+
+  train_data.columns = train_data.columns.str.strip()
+  test_data.columns = test_data.columns.str.strip()
+
+  if 'fraudulent' not in train_data.columns or 'fraudulent' not in test_data.columns:
+      raise ValueError("The 'fraudulent' column is missing in either train or test data")
+
+  
+  X_train = train_data.drop(columns=['fraudulent'], axis=1)
+  y_train = train_data['fraudulent']
+  X_test = test_data.drop(columns=['fraudulent'], axis=1)
+  y_test = test_data['fraudulent']
+
+
+
+
+  data_transformation = DataTransformation()
+  train_arr, test_arr, preprocessor_path = data_transformation.transform_data(train_data, test_data)
+
+  logging.info(f"Train and test data transformed and saved at {preprocessor_path}")
+        
