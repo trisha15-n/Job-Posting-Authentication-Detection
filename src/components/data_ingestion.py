@@ -1,12 +1,14 @@
 import os
 import sys
 import pandas as pd
+import numpy as np
 from src.exception import CustomException
 from src.logger import logging
 from sklearn.model_selection import train_test_split
 from dataclasses import dataclass
 from src.components.data_transformation import DataTransformation
 from src.components.data_transformation import DataTransformationConfig
+from src.components.model_trainer import ModelTrainer
 
 @dataclass
 class DataIngestionConfig:
@@ -51,6 +53,7 @@ if __name__ == "__main__":
   train_data = pd.read_csv(train_data_path)
   test_data = pd.read_csv(test_data_path)
 
+
   print(f"Columns in train data: {train_data.columns}")
   print(f"Columns in test data: {test_data.columns}")
 
@@ -72,5 +75,11 @@ if __name__ == "__main__":
   data_transformation = DataTransformation()
   train_arr, test_arr, preprocessor_path = data_transformation.transform_data(train_data, test_data)
 
-  logging.info(f"Train and test data transformed and saved at {preprocessor_path}")
+
+  model_trainer = ModelTrainer()
+  accuracy = model_trainer.initiate_model_trainer(train_arr, test_arr)
+
+  print(f"Model Accuracy: {accuracy}")
+
+
         
