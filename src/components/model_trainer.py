@@ -5,9 +5,12 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
+from imblearn.over_sampling import SMOTE
 from src.exception import CustomException
 from src.logger import logging
 from scipy.sparse import csr_matrix
+
+import pandas as pd
 from src.utils import save_object
 
 @dataclass
@@ -33,8 +36,14 @@ class ModelTrainer:
                 y_test = y_test.toarray().flatten()
 
             imputer = SimpleImputer(strategy="mean")
-            X_train = imputer.fit_transform(X_train) 
-            X_test = imputer.transform(X_test)     
+            X_train = imputer.fit_transform(X_train)
+            X_test = imputer.transform(X_test)
+
+            # Apply SMOTE to handle class imbalance
+            logging.info("Applying SMOTE to balance classes in training data")
+            smote = SMOTE(random_state=42)
+            X_train_res, y_train_res = smote.fit_resample(X_train, y_train)
+            logging.info(f"Class distribution after SMOTE: {dict(pd.Series(y_train_res).value_counts())}")
 
             rf_model = RandomForestClassifier(
                 n_estimators=100,
@@ -45,7 +54,7 @@ class ModelTrainer:
                 n_jobs=-1
             )
 
-            rf_model.fit(X_train, y_train)
+            rf_model.fit(X_train_res, y_train_res)
             y_pred = rf_model.predict(X_test)
             accuracy = accuracy_score(y_test, y_pred)
 
