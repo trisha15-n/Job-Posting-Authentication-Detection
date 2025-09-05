@@ -14,3 +14,11 @@ def save_object(file_path, obj):
             pickle.dump(obj, file_obj)
     except Exception as e:
         raise Exception(f"Error saving object to {file_path}: {e}")
+    
+
+def load_object(file_path):
+    try:
+        with open(file_path, 'rb') as f:
+            return pickle.load(f)
+    except Exception as e:
+        raise Exception(f"Error loading object: {e}")    
