@@ -31,7 +31,7 @@ class ModelTrainer:
             )
 
             if isinstance(y_train, csr_matrix):
-                y_train = y_train.toarray().flatten()  # Convert to dense array
+                y_train = y_train.toarray().flatten()  
             if isinstance(y_test, csr_matrix):
                 y_test = y_test.toarray().flatten()
 
@@ -39,7 +39,6 @@ class ModelTrainer:
             X_train = imputer.fit_transform(X_train)
             X_test = imputer.transform(X_test)
 
-            # Apply SMOTE to handle class imbalance
             logging.info("Applying SMOTE to balance classes in training data")
             smote = SMOTE(random_state=42)
             X_train_res, y_train_res = smote.fit_resample(X_train, y_train)

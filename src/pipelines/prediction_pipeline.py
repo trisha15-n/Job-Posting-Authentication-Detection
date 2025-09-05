@@ -7,7 +7,7 @@ from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 from scipy.sparse import csr_matrix
 from src.exception import CustomException
 from src.logger import logging
-import joblib  # Updated import for joblib
+import joblib  
 
 class PredictionPipeline:
     def __init__(self):
@@ -18,7 +18,7 @@ class PredictionPipeline:
         """Load the trained model from disk."""
         try:
             logging.info("Loading the trained model from disk")
-            model = joblib.load(self.model_path)  # Updated to joblib
+            model = joblib.load(self.model_path)  
             return model
         except Exception as e:
             raise CustomException(f"Error loading model: {e}", sys)
@@ -27,7 +27,7 @@ class PredictionPipeline:
         """Load the preprocessor object from disk."""
         try:
             logging.info("Loading the preprocessor object from disk")
-            preprocessor = joblib.load(self.preprocessor_path)  # Updated to joblib
+            preprocessor = joblib.load(self.preprocessor_path)  
             return preprocessor
         except Exception as e:
             raise CustomException(f"Error loading preprocessor: {e}", sys)
@@ -38,14 +38,12 @@ class PredictionPipeline:
             logging.info(f"Initial shape of input data: {input_data.shape}")
             logging.info(f"Initial NaN counts in input data: {input_data.isna().sum()}")
 
-            # Drop the 'fraudulent' column if it exists (not used in prediction)
             if 'fraudulent' in input_data.columns:
                 input_data = input_data.drop(columns=['fraudulent'])
 
-            # Fill missing values in 'salary_range' with '0K - 0K'
             input_data['salary_range'] = input_data['salary_range'].fillna('0K - 0K')
 
-            # Drop columns with all NaN values
+
             empty_columns = input_data.columns[input_data.isna().all()].tolist()
             if empty_columns:
                 logging.info(f"Dropping columns with all NaN values: {empty_columns}")
@@ -54,57 +52,55 @@ class PredictionPipeline:
             logging.info(f"Shape after dropping empty columns: {input_data.shape}")
             logging.info(f"NaN counts after dropping empty columns: {input_data.isna().sum()}")
 
-            # Separate numeric and categorical columns
             numeric_cols = input_data.select_dtypes(include=[np.number]).columns
             categorical_cols = input_data.select_dtypes(exclude=[np.number]).columns
 
             logging.info(f"Numeric columns: {numeric_cols}")
             logging.info(f"Categorical columns: {categorical_cols}")
 
-            # Impute missing values for numeric columns using 'mean'
+   
             numeric_imputer = SimpleImputer(strategy='mean')
             input_data[numeric_cols] = numeric_imputer.fit_transform(input_data[numeric_cols])
 
-            # Impute missing values for categorical columns using 'most_frequent'
+
             categorical_imputer = SimpleImputer(strategy='most_frequent')
             input_data[categorical_cols] = categorical_imputer.fit_transform(input_data[categorical_cols])
 
             logging.info(f"Shape after imputation: {input_data.shape}")
             logging.info(f"NaN counts after imputation: {input_data.isna().sum()}")
 
-            # Do NOT one-hot encode here; let the preprocessor handle encoding
+            
             logging.info(f"Data before preprocessor: {input_data.head()}")
 
-            # Load the preprocessor (for scaling, encoding, etc.)
+  
             preprocessor = self.load_preprocessor()
 
-            # Align columns to match those seen during training
             if hasattr(preprocessor, 'feature_names_in_'):
                 expected_cols = list(preprocessor.feature_names_in_)
-                # Add missing columns with default values
+           
                 for col in expected_cols:
                     if col not in input_data.columns:
                         input_data[col] = 0
-                # Drop extra columns
+           
                 input_data = input_data[expected_cols]
                 logging.info(f"Aligned input columns to preprocessor: {list(input_data.columns)}")
             else:
                 logging.warning("Preprocessor does not have feature_names_in_. Skipping column alignment.")
 
-            # Debug: Log expected and actual columns before transformation
+     
             if hasattr(preprocessor, 'feature_names_in_'):
                 logging.info(f"Preprocessor expects columns: {list(preprocessor.feature_names_in_)}")
             logging.info(f"Input data columns before transform: {list(input_data.columns)}")
 
-            # Apply the preprocessor transformation
+       
             X_transformed = preprocessor.transform(input_data)
             logging.info(f"Shape after preprocessor.transform: {X_transformed.shape}")
 
-            # If it's a sparse matrix, convert it to a dense matrix (array or DataFrame)
+   
             if isinstance(X_transformed, csr_matrix):
                 X_transformed = X_transformed.toarray()
 
-            # Log model expected features if possible
+  
             model = None
             model_n_features = None
             try:
@@ -122,12 +118,11 @@ class PredictionPipeline:
             nan_count = np.isnan(X_transformed).sum()
             logging.info(f"NaN counts after transformation: {nan_count}")
 
-            # If any NaNs remain, fill them with 0 (or mean if you prefer)
+     
             if nan_count > 0:
                 X_transformed = np.nan_to_num(X_transformed, nan=0)
                 logging.info(f"NaNs found after transformation. Filled with 0. New NaN count: {np.isnan(X_transformed).sum()}")
 
-            # Trim or pad features to match model's expected input
             if model_n_features is not None:
                 n_transformed = X_transformed.shape[1]
                 if n_transformed > model_n_features:
